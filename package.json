@@ -1,0 +1,40 @@
+{
+  "name": "yt-music-bot",
+  "version": "1.0.0",
+  "description": "🎵 A Discord music bot built with TypeScript that streams music from YouTube 🔥",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --watch src --ext ts --exec tsx src/index.ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "lint": "eslint . --ext .ts",
+    "start": "node dist/index.js",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/munozrc/yt-music-bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/munozrc/yt-music-bot/issues"
+  },
+  "homepage": "https://github.com/munozrc/yt-music-bot#readme",
+  "devDependencies": {
+    "@eslint/js": "9.30.1",
+    "@types/node": "24.0.10",
+    "eslint": "9.30.1",
+    "globals": "16.3.0",
+    "nodemon": "3.1.10",
+    "tsx": "4.20.3",
+    "typescript": "5.8.3",
+    "typescript-eslint": "8.35.1"
+  },
+  "dependencies": {
+    "chalk": "5.4.1",
+    "discord.js": "14.21.0",
+    "dotenv": "17.0.1",
+    "zod": "3.25.74"
+  }
+}
