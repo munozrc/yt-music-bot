@@ -1,8 +1,8 @@
 import { Client, Collection, GatewayIntentBits } from "discord.js";
 
 import { handleIsReady } from "./events/ready.event";
-import { logger } from "./utils/logger";
 import { config } from "./utils/config";
+import { logger } from "./utils/logger";
 
 export class ApplicationClient {
   public client: Client;

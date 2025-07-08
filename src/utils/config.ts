@@ -1,5 +1,8 @@
-import { z } from "zod";
 import "dotenv/config";
+
+import { z } from "zod";
+
+import { logger } from "./logger";
 
 const envSchema = z.object({
   DISCORD_TOKEN: z.string().min(1, "DISCORD_TOKEN is missing in .env"),
@@ -9,7 +12,7 @@ const envSchema = z.object({
 
 const parsedEnv = envSchema.safeParse(process.env);
 if (!parsedEnv.success) {
-  console.error("Invalid environment variables:", parsedEnv.error.format());
+  logger.error("Invalid environment variables:", parsedEnv.error.format());
   process.exit(1);
 }
 

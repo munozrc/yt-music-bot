@@ -2,7 +2,7 @@ import chalk from "chalk";
 
 function getTimestamp(): string {
   return chalk.gray(
-    `[${new Date().toISOString().replace("T", " ").slice(0, 19)}]`
+    `[${new Date().toISOString().replace("T", " ").slice(0, 19)}]`,
   );
 }
 

@@ -1,5 +1,5 @@
-import { logger } from "./utils/logger";
 import { ApplicationClient } from "./app";
+import { logger } from "./utils/logger";
 
 (async () => {
   try {
