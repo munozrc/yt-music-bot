@@ -12,6 +12,7 @@ import {
 
 import { handleInteractionCreate } from "./events/interaction.event";
 import { handleIsReady } from "./events/ready.event";
+import { YouTubeProvider } from "./player/providers/YouTubeProvider";
 import { SlashCommand } from "./types/command.types";
 import { config } from "./utils/config";
 import { logger } from "./utils/logger";
@@ -42,6 +43,7 @@ export class ApplicationClient {
   async start(): Promise<void> {
     await this.loadCommands();
     await this.deployCommands();
+    await YouTubeProvider.init();
     await this.client.login(config.DISCORD_TOKEN);
   }
 
