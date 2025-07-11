@@ -2,9 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { generateDependencyReport } from "@discordjs/voice";
 import {
   Client,
   Collection,
+  Events,
   GatewayIntentBits,
   REST,
   Routes,
@@ -24,8 +26,8 @@ export class ApplicationClient {
 
   constructor() {
     this.client = this.createClient();
-    this.commands = new Collection();
     this.rest = new REST().setToken(config.DISCORD_TOKEN);
+    this.commands = new Collection();
 
     this.loadEvents();
   }
@@ -43,13 +45,16 @@ export class ApplicationClient {
   async start(): Promise<void> {
     await this.loadCommands();
     await this.deployCommands();
+
     await YouTubeProvider.init();
     await this.client.login(config.DISCORD_TOKEN);
+
+    logger.debug(generateDependencyReport());
   }
 
   async loadEvents(): Promise<void> {
-    this.client.once("ready", handleIsReady);
-    this.client.on("interactionCreate", (...args) =>
+    this.client.once(Events.ClientReady, handleIsReady);
+    this.client.on(Events.InteractionCreate, (...args) =>
       handleInteractionCreate(this, ...args),
     );
   }

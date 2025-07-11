@@ -1,29 +1,41 @@
+import { getVoiceConnections } from "@discordjs/voice";
 import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ChatInputCommandInteraction,
+  CommandInteraction,
   EmbedBuilder,
   SlashCommandBuilder,
 } from "discord.js";
 
+import { player } from "../../player/Player";
 import { YouTubeProvider } from "../../player/providers/YouTubeProvider";
 import { logger } from "../../utils/logger";
 
 export const data = new SlashCommandBuilder()
   .setName("search")
   .setDescription("Search songs")
-  .addStringOption((option) => {
-    return option
+  .addStringOption((option) =>
+    option
       .setName("query")
       .setDescription("Search songs from YouTube")
-      .setRequired(true);
-  });
+      .setRequired(true),
+  );
 
-export async function execute(
-  interaction: ChatInputCommandInteraction,
-): Promise<void> {
+export async function execute(interaction: CommandInteraction): Promise<void> {
+  if (!interaction.isChatInputCommand()) {
+    logger.info(`Register interaction ${interaction.commandName}`);
+    return;
+  }
+
   try {
+    const numberOfConnections = getVoiceConnections().size;
+    if (numberOfConnections === 0) {
+      logger.error("Bot without voice channel");
+      await interaction.reply("You must invite the bot to a voice channel");
+      return;
+    }
+
     const query = interaction.options.getString("query");
     if (!query?.length) {
       logger.warn("Query song is not valid");
@@ -80,10 +92,13 @@ export async function execute(
       return;
     }
 
+    const requestedBy = interaction.user.username ?? "unknown";
+    await player.play(songSelected, requestedBy);
+
     const responseEmbed = new EmbedBuilder()
       .setColor(0x0099ff)
       .setTitle("Added Song!")
-      .setImage(songSelected.thumbnailUrl)
+      .setImage(songSelected.thumbnail)
       .setDescription(`${songSelected.artist} - ${songSelected.title}`);
 
     await confirmation.update({
