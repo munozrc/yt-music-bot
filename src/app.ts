@@ -31,11 +31,29 @@ export class ApplicationClient {
     this.rest = new REST().setToken(config.DISCORD_TOKEN);
     this.commands = new Collection();
     this.player = new Player();
-
-    this.loadEvents();
   }
 
-  createClient(): Client<boolean> {
+  public async start(): Promise<void> {
+    logger.info("🟢 Starting bot initialization...");
+
+    try {
+      await this.loadCommands();
+      await this.deployCommands();
+      this.registerEventListeners();
+
+      logger.info("🎵 Initializing audio providers...");
+      await YouTubeProvider.init();
+      logger.success("✅ Audio providers initialized.");
+
+      logger.info("🔑 Logging in to Discord...");
+      await this.client.login(config.DISCORD_TOKEN);
+    } catch (error) {
+      logger.error("❌ Bot initialization failed:", error);
+      throw error;
+    }
+  }
+
+  private createClient(): Client<boolean> {
     return new Client({
       intents: [
         GatewayIntentBits.Guilds,
@@ -45,24 +63,20 @@ export class ApplicationClient {
     });
   }
 
-  async start(): Promise<void> {
-    await this.loadCommands();
-    await this.deployCommands();
+  private async registerEventListeners(): Promise<void> {
+    logger.info("🔗 Registering event listeners...");
 
-    await YouTubeProvider.init();
-    await this.client.login(config.DISCORD_TOKEN);
-  }
-
-  async loadEvents(): Promise<void> {
     this.client.once(Events.ClientReady, handleIsReady);
     this.client.on(Events.InteractionCreate, (...args) =>
       handleInteractionCreate(this, ...args),
     );
   }
 
-  async loadCommands(): Promise<void> {
+  private async loadCommands(): Promise<void> {
     const commandsPath = path.join(__dirname, "commands");
     const categories = fs.readdirSync(commandsPath);
+
+    logger.info("📦 Registering commands...");
 
     for (const dirent of categories) {
       const categoryPath = path.join(commandsPath, dirent);
@@ -79,10 +93,13 @@ export class ApplicationClient {
         logger.debug(`✅ Loaded command: ${data.name}`);
       }
     }
+
+    logger.info(`📦 Total commands loaded: ${this.commands.size}`);
   }
 
-  async deployCommands(): Promise<void> {
+  private async deployCommands(): Promise<void> {
     try {
+      logger.info("🚀 Deploying slash commands...");
       logger.info("Started refreshing application (/) commands.");
       const commandsData = this.commands.map((cmd) => cmd.data.toJSON());
 
