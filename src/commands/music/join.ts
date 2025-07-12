@@ -5,6 +5,7 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 
+import { player } from "../../player/Player";
 import { logger } from "../../utils/logger";
 
 export const data = new SlashCommandBuilder()
@@ -64,13 +65,15 @@ export async function execute(
       logger.info("Previous voice connection was destroyed, creating new one");
     }
 
-    joinVoiceChannel({
+    const voiceConnection = joinVoiceChannel({
       channelId: voiceChannel.id,
       guildId: guild.id,
       adapterCreator: guild.voiceAdapterCreator,
     });
 
+    player.joinVoiceChannel(voiceConnection);
     await interaction.reply(`✅ I joined **#${voiceChannel.name}**`);
+
     logger.success(`connection success to #${voiceChannel.name}`);
   } catch (error) {
     logger.error(

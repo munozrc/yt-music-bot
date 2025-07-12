@@ -1,5 +1,4 @@
-import { Readable } from "node:stream";
-import { ReadableStream } from "node:stream/web";
+import Stream, { PassThrough, Readable } from "node:stream";
 
 import { Innertube, UniversalCache } from "youtubei.js";
 import { type MusicResponsiveListItem } from "youtubei.js/dist/src/parser/nodes";
@@ -12,11 +11,16 @@ export class YouTubeProvider implements MusicProvider {
   private static instance?: Innertube;
 
   static async init() {
-    if (!this.instance) {
-      this.instance = await Innertube.create({
-        cache: new UniversalCache(false),
-        generate_session_locally: true,
-      });
+    try {
+      if (!this.instance) {
+        this.instance = await Innertube.create({
+          cache: new UniversalCache(false),
+          generate_session_locally: true,
+        });
+      }
+    } catch (error) {
+      logger.error("Error initializing YouTubeProvider: ", error);
+      throw new Error("Failed to initialize YouTubeProvider");
     }
   }
 
@@ -28,8 +32,7 @@ export class YouTubeProvider implements MusicProvider {
       throw new Error("YouTubeProvider not initialized");
     }
 
-    const limit = options.limit ?? 5;
-    const search = await this.instance!.music.search(query, { type: "song" });
+    const search = await this.instance.music.search(query, { type: "song" });
     const results = search.songs?.contents ?? [];
 
     if (!results.length) {
@@ -49,32 +52,35 @@ export class YouTubeProvider implements MusicProvider {
       )
       .map((item: NonNullable<MusicResponsiveListItem>) => ({
         title: item.title!,
-        artist: item.artists!.map((a) => a.name).join(" & ") ?? "Unknown",
+        artist: item.artists?.map((a) => a.name).join(" & ") ?? "Unknown",
         duration: item.duration?.seconds ?? 0,
         thumbnail: item.thumbnails![0]!.url,
-        provider: "YouTubeProvider",
         url: item.id!,
       }))
-      .slice(0, limit);
+      .slice(0, options.limit ?? 5);
 
     return songs;
   }
 
-  static async getStream(videoId: TrackData["url"]): Promise<Readable> {
+  static async getStream(videoId: TrackData["url"]): Promise<Stream.Readable> {
     if (!this.instance) {
       throw new Error("YouTubeProvider not initialized");
     }
 
     try {
       logger.debug(`Get stream for url=${videoId}`);
-      const ytStream = await this.instance.download(videoId, {
-        type: "audio", // audio, video or video+audio
-        quality: "best", // best, bestefficiency, 144p, 240p, 480p, 720p and so on.
+      const streamedTrackWeb = await this.instance.download(videoId, {
+        type: "video+audio",
+        quality: "bestefficiency",
         client: "YTMUSIC",
         format: "mp4",
       });
 
-      return Readable.fromWeb(ytStream as ReadableStream);
+      const streamedTrack = Readable.from(streamedTrackWeb);
+      const bufferStream = new PassThrough();
+      streamedTrack.pipe(bufferStream);
+
+      return bufferStream;
     } catch (error) {
       logger.error(`Failed to get audio stream from URL: ${videoId}`, error);
       throw new Error(`Failed to get audio stream from URL: ${videoId}`);
