@@ -12,7 +12,7 @@ import { YouTubeProvider } from "./providers/YouTubeProvider";
 import { Queue } from "./Queue";
 import { Track, TrackData } from "./Track";
 
-class Player {
+export class Player {
   public readonly queue = new Queue();
   private readonly audioPlayer: AudioPlayer;
   private voiceConnection: VoiceConnection | null = null;
@@ -148,5 +148,3 @@ class Player {
     this.voiceConnection = null;
   }
 }
-
-export const player = new Player();

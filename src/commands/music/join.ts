@@ -1,11 +1,7 @@
 import { getVoiceConnection, joinVoiceChannel } from "@discordjs/voice";
-import {
-  CommandInteraction,
-  InteractionResponse,
-  SlashCommandBuilder,
-} from "discord.js";
+import { InteractionResponse, SlashCommandBuilder } from "discord.js";
 
-import { player } from "../../player/Player";
+import { SlashCommand } from "../../types/command.types";
 import { logger } from "../../utils/logger";
 
 export const data = new SlashCommandBuilder()
@@ -13,7 +9,8 @@ export const data = new SlashCommandBuilder()
   .setDescription("Join bot to a voice channel");
 
 export async function execute(
-  interaction: CommandInteraction,
+  interaction: Parameters<SlashCommand["execute"]>["0"],
+  client: Parameters<SlashCommand["execute"]>["1"],
 ): Promise<InteractionResponse<boolean> | void> {
   if (!interaction.isChatInputCommand()) {
     logger.info(`Register interaction ${interaction.commandName}`);
@@ -71,7 +68,7 @@ export async function execute(
       adapterCreator: guild.voiceAdapterCreator,
     });
 
-    player.joinVoiceChannel(voiceConnection);
+    client.player.joinVoiceChannel(voiceConnection);
     await interaction.reply(`✅ I joined **#${voiceChannel.name}**`);
 
     logger.success(`connection success to #${voiceChannel.name}`);

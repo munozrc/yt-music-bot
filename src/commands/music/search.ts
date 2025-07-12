@@ -3,13 +3,12 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  CommandInteraction,
   EmbedBuilder,
   SlashCommandBuilder,
 } from "discord.js";
 
-import { player } from "../../player/Player";
 import { YouTubeProvider } from "../../player/providers/YouTubeProvider";
+import { SlashCommand } from "../../types/command.types";
 import { logger } from "../../utils/logger";
 
 export const data = new SlashCommandBuilder()
@@ -22,7 +21,10 @@ export const data = new SlashCommandBuilder()
       .setRequired(true),
   );
 
-export async function execute(interaction: CommandInteraction): Promise<void> {
+export async function execute(
+  interaction: Parameters<SlashCommand["execute"]>["0"],
+  client: Parameters<SlashCommand["execute"]>["1"],
+): Promise<void> {
   if (!interaction.isChatInputCommand()) {
     logger.info(`Register interaction ${interaction.commandName}`);
     return;
@@ -85,15 +87,12 @@ export async function execute(interaction: CommandInteraction): Promise<void> {
 
     const songSelected = songs[parseInt(confirmation.customId) - 1];
     if (typeof songSelected === "undefined") {
-      await confirmation.update({
-        content: "I couldn't add the song",
-        components: [],
-      });
+      await confirmation.update({ content: "I couldn't add the song" });
       return;
     }
 
     const requestedBy = interaction.user.username ?? "unknown";
-    await player.play(songSelected, requestedBy);
+    await client.player.play(songSelected, requestedBy);
 
     const responseEmbed = new EmbedBuilder()
       .setColor(0x0099ff)
@@ -101,11 +100,7 @@ export async function execute(interaction: CommandInteraction): Promise<void> {
       .setImage(songSelected.thumbnail)
       .setDescription(`${songSelected.artist} - ${songSelected.title}`);
 
-    await confirmation.update({
-      content: "",
-      components: [],
-      embeds: [responseEmbed],
-    });
+    await confirmation.update({ embeds: [responseEmbed] });
   } catch (error) {
     logger.error("Failed to execute /search command", error);
     if (interaction.replied || interaction.deferred) {

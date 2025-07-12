@@ -17,6 +17,7 @@ export async function execute(interaction: CommandInteraction): Promise<void> {
     const helpMessage = `
       🎵 **YT Music Bot Commands** 🎵
 
+      **/search <song>** – Search and plays a song from YouTube.
       **/play <song>** – Plays a song from YouTube.
       **/skip** – Skips the current song.
       **/stop** – Stops playback and clears the queue.

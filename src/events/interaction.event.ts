@@ -22,7 +22,7 @@ export async function handleInteractionCreate(
   }
 
   try {
-    await command.execute(interaction);
+    await command.execute(interaction, client);
   } catch (error) {
     logger.error(`Error executing ${interaction.commandName}:`, error);
     if (interaction.replied || interaction.deferred) {

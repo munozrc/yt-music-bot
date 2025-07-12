@@ -14,6 +14,7 @@ import {
 
 import { handleInteractionCreate } from "./events/interaction.event";
 import { handleIsReady } from "./events/ready.event";
+import { Player } from "./player/Player";
 import { YouTubeProvider } from "./player/providers/YouTubeProvider";
 import { SlashCommand } from "./types/command.types";
 import { config } from "./utils/config";
@@ -22,12 +23,15 @@ import { logger } from "./utils/logger";
 export class ApplicationClient {
   public client: Client;
   public commands: Collection<string, SlashCommand>;
+
+  public player: Player;
   public rest: REST;
 
   constructor() {
     this.client = this.createClient();
     this.rest = new REST().setToken(config.DISCORD_TOKEN);
     this.commands = new Collection();
+    this.player = new Player();
 
     this.loadEvents();
   }

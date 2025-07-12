@@ -1,10 +1,7 @@
 import { getVoiceConnection } from "@discordjs/voice";
-import {
-  CommandInteraction,
-  InteractionResponse,
-  SlashCommandBuilder,
-} from "discord.js";
+import { InteractionResponse, SlashCommandBuilder } from "discord.js";
 
+import { SlashCommand } from "../../types/command.types";
 import { logger } from "../../utils/logger";
 
 export const data = new SlashCommandBuilder()
@@ -12,7 +9,8 @@ export const data = new SlashCommandBuilder()
   .setDescription("Disconnect the bot from the voice channel");
 
 export async function execute(
-  interaction: CommandInteraction,
+  interaction: Parameters<SlashCommand["execute"]>["0"],
+  client: Parameters<SlashCommand["execute"]>["1"],
 ): Promise<InteractionResponse<boolean> | void> {
   const { guild } = interaction;
 
@@ -35,9 +33,12 @@ export async function execute(
     const channelName =
       guild.channels.cache.get(connection.joinConfig.channelId ?? "")?.name ||
       "a voice channel";
+
     connection.destroy();
+    client.player.disconnect();
 
     await interaction.reply(`👋 Disconnected from **${channelName}**`);
+
     logger.success(`Bot disconnected from #${channelName} in #${guild.name}`);
   } catch (error) {
     logger.error(`Error executing /leave in ${guild.name}`, error);
