@@ -22,8 +22,8 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(
-  interaction: Parameters<SlashCommand["execute"]>["0"],
-  client: Parameters<SlashCommand["execute"]>["1"],
+  interaction: Parameters<SlashCommand["execute"]>[0],
+  client: Parameters<SlashCommand["execute"]>[1],
 ): Promise<void> {
   if (!interaction.isChatInputCommand()) {
     logger.info(`Register interaction ${interaction.commandName}`);
@@ -100,13 +100,19 @@ export async function execute(
       .setImage(songSelected.thumbnail)
       .setDescription(`${songSelected.artist} - ${songSelected.title}`);
 
-    await confirmation.update({ embeds: [responseEmbed] });
+    await confirmation.update({
+      components: [],
+      content: "",
+      embeds: [responseEmbed],
+    });
   } catch (error) {
     logger.error("Failed to execute /search command", error);
+
+    const errorMessage = "❌ Something went wrong while searching.";
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp("Something went wrong while searching.");
+      await interaction.followUp(errorMessage);
     } else {
-      await interaction.reply("Something went wrong while searching.");
+      await interaction.reply(errorMessage);
     }
   }
 }

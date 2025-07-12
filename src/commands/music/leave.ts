@@ -9,11 +9,15 @@ export const data = new SlashCommandBuilder()
   .setDescription("Disconnect the bot from the voice channel");
 
 export async function execute(
-  interaction: Parameters<SlashCommand["execute"]>["0"],
-  client: Parameters<SlashCommand["execute"]>["1"],
+  interaction: Parameters<SlashCommand["execute"]>[0],
+  client: Parameters<SlashCommand["execute"]>[1],
 ): Promise<InteractionResponse<boolean> | void> {
-  const { guild } = interaction;
+  if (!interaction.isChatInputCommand()) {
+    logger.info(`Register interaction ${interaction.commandName}`);
+    return;
+  }
 
+  const { guild } = interaction;
   if (!guild) {
     logger.warn("Received /leave interaction outside of a guild");
     return await interaction.reply(
@@ -34,9 +38,7 @@ export async function execute(
       guild.channels.cache.get(connection.joinConfig.channelId ?? "")?.name ||
       "a voice channel";
 
-    connection.destroy();
     client.player.disconnect();
-
     await interaction.reply(`👋 Disconnected from **${channelName}**`);
 
     logger.success(`Bot disconnected from #${channelName} in #${guild.name}`);

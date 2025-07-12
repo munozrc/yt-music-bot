@@ -1,9 +1,6 @@
-import {
-  type CommandInteraction,
-  MessageFlags,
-  SlashCommandBuilder,
-} from "discord.js";
+import { MessageFlags, SlashCommandBuilder } from "discord.js";
 
+import { SlashCommand } from "../../types/command.types";
 import { logger } from "../../utils/logger";
 
 export const data = new SlashCommandBuilder()
@@ -12,7 +9,9 @@ export const data = new SlashCommandBuilder()
     "Displays a list of all available commands and their descriptions.",
   );
 
-export async function execute(interaction: CommandInteraction): Promise<void> {
+export async function execute(
+  interaction: Parameters<SlashCommand["execute"]>[0],
+): Promise<void> {
   try {
     const helpMessage = `
       🎵 **YT Music Bot Commands** 🎵
@@ -32,8 +31,13 @@ export async function execute(interaction: CommandInteraction): Promise<void> {
     });
   } catch (error) {
     logger.error("Failed to execute /help command", error);
-    throw new Error(
-      "An unexpected error occurred while executing the help command.",
-    );
+
+    const errorMessage =
+      "❌ An unexpected error occurred while executing the help command.";
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp(errorMessage);
+    } else {
+      await interaction.reply(errorMessage);
+    }
   }
 }

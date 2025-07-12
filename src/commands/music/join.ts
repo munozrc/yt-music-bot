@@ -9,8 +9,8 @@ export const data = new SlashCommandBuilder()
   .setDescription("Join bot to a voice channel");
 
 export async function execute(
-  interaction: Parameters<SlashCommand["execute"]>["0"],
-  client: Parameters<SlashCommand["execute"]>["1"],
+  interaction: Parameters<SlashCommand["execute"]>[0],
+  client: Parameters<SlashCommand["execute"]>[1],
 ): Promise<InteractionResponse<boolean> | void> {
   if (!interaction.isChatInputCommand()) {
     logger.info(`Register interaction ${interaction.commandName}`);
