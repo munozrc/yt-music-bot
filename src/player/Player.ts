@@ -29,14 +29,19 @@ export class Player {
       logger.info("AudioPlayer is idle, checking for next track...");
       const nextTrack = this.queue.next;
 
-      if (nextTrack) {
-        this.playTrack(nextTrack).catch((err) =>
-          logger.error(`Error playing next track: ${nextTrack.title}`, err),
-        );
-      } else {
+      if (!nextTrack) {
         logger.info("Queue finished. Disconnecting...");
         this.disconnect();
+        return;
       }
+
+      this.playTrack(nextTrack).catch((err) => {
+        logger.error(`Error playing next track: ${nextTrack.title}`, err);
+        logger.info(`Skipping problematic track: ${nextTrack.title}`);
+
+        this.queue.advance();
+        this.audioPlayer.emit(AudioPlayerStatus.Idle);
+      });
     });
 
     this.audioPlayer.on("error", (error) => {
@@ -46,7 +51,7 @@ export class Player {
 
     this.audioPlayer.on("stateChange", (oldState, newState) => {
       if (oldState.status !== newState.status) {
-        logger.info(
+        logger.debug(
           `AudioPlayer state changed: ${oldState.status} → ${newState.status}`,
         );
       }
@@ -83,16 +88,18 @@ export class Player {
 
   private async playTrack(track: Track): Promise<void> {
     try {
-      logger.info(`Preparing to play: ${track.title}`);
-      const stream = await YouTubeProvider.getStream(track.url);
+      logger.info(`[PLAYING] Preparing to play: ${track.title}`);
 
+      const stream = await YouTubeProvider.downloadAndCache(track.url);
       const resource = createAudioResource(stream, { inlineVolume: true });
+
       resource.volume?.setVolume(this.volume);
-
       this.currentResource = resource;
-      this.audioPlayer.play(resource);
 
-      logger.info(`Now playing: ${track.title}`);
+      this.audioPlayer.play(resource);
+      this.queue.advance();
+
+      logger.info(`[PLAYING] Now playing: ${track.title}`);
     } catch (error) {
       logger.error(`Failed to play track: ${track.title}`, error);
       throw new Error(`Failed to play track: ${track.title}`);

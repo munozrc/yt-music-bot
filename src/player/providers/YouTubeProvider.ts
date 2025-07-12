@@ -1,4 +1,7 @@
+import { createWriteStream, existsSync, mkdirSync } from "node:fs";
+import path from "node:path";
 import Stream, { PassThrough, Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 
 import { Innertube, UniversalCache } from "youtubei.js";
 import { type MusicResponsiveListItem } from "youtubei.js/dist/src/parser/nodes";
@@ -78,12 +81,56 @@ export class YouTubeProvider implements MusicProvider {
 
       const streamedTrack = Readable.from(streamedTrackWeb);
       const bufferStream = new PassThrough();
+
       streamedTrack.pipe(bufferStream);
+
+      streamedTrack.on("error", (err) => {
+        logger.error(`Stream error for videoId=${videoId}`, err);
+        bufferStream.destroy(err);
+      });
 
       return bufferStream;
     } catch (error) {
       logger.error(`Failed to get audio stream from URL: ${videoId}`, error);
       throw new Error(`Failed to get audio stream from URL: ${videoId}`);
+    }
+  }
+
+  static async downloadAndCache(videoId: string): Promise<string> {
+    if (!this.instance) {
+      throw new Error("YouTubeProvider not initialized");
+    }
+
+    const cacheDir = path.resolve(process.cwd(), ".cache");
+    if (!existsSync(cacheDir)) {
+      mkdirSync(cacheDir);
+    }
+
+    const filename = `yt-provider-${videoId}.m4a`;
+    const filePath = path.resolve(cacheDir, filename);
+
+    if (existsSync(filePath)) {
+      logger.debug(`Reusing cached file: ${filePath}`);
+      return filePath;
+    }
+
+    try {
+      logger.debug(`Downloading ${videoId} to ${filename}...`);
+      const stream = await this.instance.download(videoId, {
+        type: "video+audio",
+        quality: "bestefficiency",
+        client: "YTMUSIC",
+        format: "mp4",
+      });
+
+      const writable = createWriteStream(filePath);
+      await pipeline(stream, writable);
+
+      logger.debug(`Downloaded and cached: ${filename}`);
+      return filePath;
+    } catch (error) {
+      logger.error(`Failed to download ${videoId}:`, error);
+      throw new Error(`Failed to download and cache track: ${videoId}`);
     }
   }
 }
