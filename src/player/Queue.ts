@@ -48,6 +48,7 @@ export class Queue {
   public toString(): string {
     return this.tracks
       .map((track, index) => {
+        console.log({ index, currentIndex: this.currentIndex });
         const prefix = index === this.currentIndex ? "▶️" : `${index + 1}.`;
         return `${prefix} **${track.title}** (requested by ${track.requestedBy})`;
       })

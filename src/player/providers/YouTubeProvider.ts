@@ -110,7 +110,7 @@ export class YouTubeProvider implements MusicProvider {
     const filePath = path.resolve(cacheDir, filename);
 
     if (existsSync(filePath)) {
-      logger.debug(`Reusing cached file: ${filePath}`);
+      logger.debug(`Reusing cached file: ${filename}`);
       return filePath;
     }
 

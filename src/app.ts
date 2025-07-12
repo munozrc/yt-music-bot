@@ -2,7 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { generateDependencyReport } from "@discordjs/voice";
 import {
   Client,
   Collection,
@@ -52,8 +51,6 @@ export class ApplicationClient {
 
     await YouTubeProvider.init();
     await this.client.login(config.DISCORD_TOKEN);
-
-    logger.debug(generateDependencyReport());
   }
 
   async loadEvents(): Promise<void> {
@@ -79,7 +76,7 @@ export class ApplicationClient {
         const { data, execute } = await import(commandModule);
 
         this.commands.set(data.name, { data, execute });
-        logger.success(`✅ Loaded command: ${data.name}`);
+        logger.debug(`✅ Loaded command: ${data.name}`);
       }
     }
   }
