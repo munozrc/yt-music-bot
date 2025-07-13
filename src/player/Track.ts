@@ -29,4 +29,8 @@ export class Track implements TrackData {
     const seconds = this.duration % 60;
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   }
+
+  public toString(): string {
+    return `**${this.artist}** - ${this.title} \`${this.formattedDuration}\``;
+  }
 }

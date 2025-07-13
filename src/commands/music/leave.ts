@@ -39,7 +39,7 @@ export async function execute(
       "a voice channel";
 
     client.player.disconnect();
-    await interaction.reply(`👋 Disconnected from **${channelName}**`);
+    await interaction.reply(`👋 Disconnected from **#${channelName}**`);
 
     logger.success(`Bot disconnected from #${channelName} in #${guild.name}`);
   } catch (error) {

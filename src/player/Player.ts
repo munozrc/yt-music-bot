@@ -17,7 +17,7 @@ export class Player {
   private readonly audioPlayer: AudioPlayer;
   private voiceConnection: VoiceConnection | null = null;
   private currentResource: AudioResource | null = null;
-  private volume: number = 0.2;
+  private volume: number = 0.15;
 
   constructor() {
     this.audioPlayer = createAudioPlayer();

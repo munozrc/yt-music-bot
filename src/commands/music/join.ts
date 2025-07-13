@@ -1,5 +1,10 @@
 import { getVoiceConnection, joinVoiceChannel } from "@discordjs/voice";
-import { InteractionResponse, SlashCommandBuilder } from "discord.js";
+import {
+  ContainerBuilder,
+  InteractionResponse,
+  MessageFlags,
+  SlashCommandBuilder,
+} from "discord.js";
 
 import { SlashCommand } from "../../types/command.types";
 import { logger } from "../../utils/logger";
@@ -69,7 +74,17 @@ export async function execute(
     });
 
     client.player.joinVoiceChannel(voiceConnection);
-    await interaction.reply(`✅ I joined **#${voiceChannel.name}**`);
+
+    const containerResponse = new ContainerBuilder()
+      .setAccentColor(0x0099ff)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(`✅ I joined **#${voiceChannel.name}**`),
+      );
+
+    await interaction.reply({
+      components: [containerResponse],
+      flags: MessageFlags.IsComponentsV2,
+    });
 
     logger.success(`connection success to #${voiceChannel.name}`);
   } catch (error) {

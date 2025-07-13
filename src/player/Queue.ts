@@ -48,9 +48,8 @@ export class Queue {
   public toString(): string {
     return this.tracks
       .map((track, index) => {
-        console.log({ index, currentIndex: this.currentIndex });
-        const prefix = index === this.currentIndex ? "▶️" : `${index + 1}.`;
-        return `${prefix} **${track.title}** (requested by ${track.requestedBy})`;
+        const prefix = index === this.currentIndex - 1 ? "▶️" : `${index + 1}.`;
+        return `${prefix} **[${track.artist} - ${track.title}](https://www.youtube.com/watch?v=${track.url})** (requested by ${track.requestedBy}) \`${track.formattedDuration}\``;
       })
       .join("\n");
   }

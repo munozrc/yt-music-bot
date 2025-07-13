@@ -1,6 +1,7 @@
 import {
-  EmbedBuilder,
+  ContainerBuilder,
   InteractionResponse,
+  MessageFlags,
   SlashCommandBuilder,
 } from "discord.js";
 
@@ -21,18 +22,31 @@ export async function execute(
   }
 
   try {
+    const containerResponse = new ContainerBuilder().setAccentColor(0x0099ff);
     const queue = client.player.queue;
+
     if (queue.isEmpty) {
-      await interaction.reply("📭 The queue is currently empty.");
-      return;
+      containerResponse.addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent("📭 The queue is currently empty."),
+      );
+
+      return await interaction.reply({
+        components: [containerResponse],
+        flags: MessageFlags.IsComponentsV2,
+      });
     }
 
-    const embed = new EmbedBuilder()
-      .setColor(0x00ff00)
-      .setTitle("🎶 Current Queue")
-      .setDescription(queue.toString());
+    containerResponse.addTextDisplayComponents((textDisplay) =>
+      textDisplay.setContent(
+        `**Current Queue**
+        ${queue.toString()}`,
+      ),
+    );
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply({
+      components: [containerResponse],
+      flags: MessageFlags.IsComponentsV2,
+    });
   } catch (error) {
     logger.error("Failed to execute /queue command", error);
 

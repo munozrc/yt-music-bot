@@ -3,7 +3,8 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  EmbedBuilder,
+  ContainerBuilder,
+  MessageFlags,
   SlashCommandBuilder,
 } from "discord.js";
 
@@ -62,11 +63,8 @@ export async function execute(
       ...optionButtons,
     );
 
-    const songList = songs.map((song, i) => {
-      return `\`[${i + 1}]\` **${song.artist}** - ${song.title}`;
-    });
     const message = await interaction.reply({
-      content: songList.join("\n"),
+      content: songs.map((s, i) => `\`${i + 1}.\` ${s.toString()}`).join("\n"),
       components: [row],
     });
 
@@ -94,16 +92,18 @@ export async function execute(
     const requestedBy = interaction.user.username ?? "unknown";
     await client.player.play(songSelected, requestedBy);
 
-    const responseEmbed = new EmbedBuilder()
-      .setColor(0x0099ff)
-      .setTitle("Added Song!")
-      .setImage(songSelected.thumbnail)
-      .setDescription(`${songSelected.artist} - ${songSelected.title}`);
+    const containerResponse = new ContainerBuilder()
+      .setAccentColor(0x0099ff)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          `🎶 Song **[${songSelected.artist} - ${songSelected.title}](https://www.youtube.com/watch?v=${songSelected.url})** add to the queue! \`${songSelected.formattedDuration}\``,
+        ),
+      );
 
     await confirmation.update({
-      components: [],
+      components: [containerResponse],
+      flags: MessageFlags.IsComponentsV2,
       content: "",
-      embeds: [responseEmbed],
     });
   } catch (error) {
     logger.error("Failed to execute /search command", error);

@@ -7,7 +7,7 @@ import { Innertube, UniversalCache } from "youtubei.js";
 import { type MusicResponsiveListItem } from "youtubei.js/dist/src/parser/nodes";
 
 import { logger } from "../../utils/logger";
-import { type TrackData } from "../Track";
+import { Track, type TrackData } from "../Track";
 import { MusicProvider } from "./MusicProvider";
 
 export class YouTubeProvider implements MusicProvider {
@@ -30,7 +30,7 @@ export class YouTubeProvider implements MusicProvider {
   static async searchSong(
     query: string,
     options: { limit?: number } = {},
-  ): Promise<Omit<TrackData, "requestedBy">[]> {
+  ): Promise<Track[]> {
     if (!this.instance) {
       throw new Error("YouTubeProvider not initialized");
     }
@@ -53,13 +53,17 @@ export class YouTubeProvider implements MusicProvider {
             item.id,
         ),
       )
-      .map((item: NonNullable<MusicResponsiveListItem>) => ({
-        title: item.title!,
-        artist: item.artists?.map((a) => a.name).join(" & ") ?? "Unknown",
-        duration: item.duration?.seconds ?? 0,
-        thumbnail: item.thumbnails![0]!.url,
-        url: item.id!,
-      }))
+      .map(
+        (item: NonNullable<MusicResponsiveListItem>) =>
+          new Track({
+            title: item.title!,
+            artist: item.artists?.map((a) => a.name).join(" & ") ?? "Unknown",
+            duration: item.duration?.seconds ?? 0,
+            thumbnail: item.thumbnails![0]!.url,
+            requestedBy: "",
+            url: item.id!,
+          }),
+      )
       .slice(0, options.limit ?? 5);
 
     return songs;
