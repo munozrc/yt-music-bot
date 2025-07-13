@@ -37,10 +37,7 @@ export async function execute(
     }
 
     containerResponse.addTextDisplayComponents((textDisplay) =>
-      textDisplay.setContent(
-        `**Current Queue**
-        ${queue.toString()}`,
-      ),
+      textDisplay.setContent(`**Current Queue**\n${queue.toString()}`),
     );
 
     await interaction.reply({
