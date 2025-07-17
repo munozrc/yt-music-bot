@@ -78,11 +78,11 @@ export class ApplicationClient {
 
     logger.info("📦 Registering commands...");
 
-    for (const dirent of categories) {
-      const categoryPath = path.join(commandsPath, dirent);
+    for (const folder of categories) {
+      const categoryPath = path.join(commandsPath, folder);
       const commandFiles = fs
         .readdirSync(categoryPath)
-        .filter((file) => file.endsWith(".ts"));
+        .filter((file) => file.endsWith(".ts") || file.endsWith(".js"));
 
       for (const file of commandFiles) {
         const filePath = path.join(categoryPath, file);
