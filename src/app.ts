@@ -101,16 +101,20 @@ export class ApplicationClient {
     try {
       logger.info("🚀 Deploying slash commands...");
       logger.info("Started refreshing application (/) commands.");
+
       const commandsData = this.commands.map((cmd) => cmd.data.toJSON());
+      logger.info(`Registering ${commandsData.length} slash commands...`);
 
       await this.rest.put(
-        Routes.applicationGuildCommands(config.CLIENT_ID, config.SERVER_ID),
+        process.env.DEBUG === "true"
+          ? Routes.applicationCommands(config.CLIENT_ID)
+          : Routes.applicationGuildCommands(config.CLIENT_ID, config.SERVER_ID),
         { body: commandsData },
       );
 
-      logger.success("Successfully reloaded application (/) commands.");
+      logger.success("✅ Successfully reloaded application (/) commands.");
     } catch (error) {
-      logger.error("Failed to register slash commands:", error);
+      logger.error("❌ Failed to register slash commands:", error);
       throw new Error("Failed to deploy application commands.");
     }
   }
