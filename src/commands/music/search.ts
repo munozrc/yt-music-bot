@@ -64,7 +64,7 @@ export async function execute(
     );
 
     const message = await interaction.reply({
-      content: songs.map((s, i) => `\`${i + 1}.\` ${s.toString()}`).join("\n"),
+      content: songs.map((s, i) => `${i + 1}. ${s.toString()}`).join("\n"),
       components: [row],
     });
 

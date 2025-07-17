@@ -17,7 +17,7 @@ export class Player {
   private readonly audioPlayer: AudioPlayer;
   private voiceConnection: VoiceConnection | null = null;
   private currentResource: AudioResource | null = null;
-  private volume: number = 0.15;
+  private volume: number = 0.1;
 
   constructor() {
     this.audioPlayer = createAudioPlayer();
@@ -27,11 +27,12 @@ export class Player {
   private setupAudioPlayerEvents(): void {
     this.audioPlayer.on(AudioPlayerStatus.Idle, () => {
       logger.info("AudioPlayer is idle, checking for next track...");
-      const nextTrack = this.queue.next;
+
+      this.queue.advance();
+      const nextTrack = this.queue.current;
 
       if (!nextTrack) {
         logger.info("Queue finished. Disconnecting...");
-        this.disconnect();
         return;
       }
 
@@ -95,9 +96,7 @@ export class Player {
 
       resource.volume?.setVolume(this.volume);
       this.currentResource = resource;
-
       this.audioPlayer.play(resource);
-      this.queue.advance();
 
       logger.info(`[PLAYING] Now playing: ${track.title}`);
     } catch (error) {
@@ -106,14 +105,16 @@ export class Player {
     }
   }
 
-  skip(): void {
+  skip(): boolean {
     if (this.audioPlayer.state.status === AudioPlayerStatus.Idle) {
       logger.warn("Cannot skip. No track is currently playing.");
-      return;
+      return false;
     }
 
     logger.info("Skipping current track...");
     this.audioPlayer.stop(true);
+
+    return this.queue.current !== null;
   }
 
   pause(): void {

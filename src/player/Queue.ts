@@ -8,10 +8,6 @@ export class Queue {
     return this.tracks[this.currentIndex] || null;
   }
 
-  get next(): Track | null {
-    return this.tracks[this.currentIndex++] || null;
-  }
-
   get isEmpty(): boolean {
     return this.tracks.length === 0;
   }
@@ -48,7 +44,7 @@ export class Queue {
   public toString(): string {
     return this.tracks
       .map((track, index) => {
-        const prefix = index === this.currentIndex - 1 ? "▶️" : `${index + 1}.`;
+        const prefix = index === this.currentIndex ? "▶️" : `${index + 1}.`;
         return `${prefix} **[${track.artist} - ${track.title}](https://www.youtube.com/watch?v=${track.url})** (requested by ${track.requestedBy}) \`${track.formattedDuration}\``;
       })
       .join("\n");

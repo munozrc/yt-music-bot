@@ -25,8 +25,12 @@ export async function execute(
       return;
     }
 
-    client.player.skip();
-    await interaction.reply("⏭️ Skipped to the next song!");
+    const hasNextTrack = client.player.skip();
+    const messageReply = hasNextTrack
+      ? "⏭️ Skipped to the next song!"
+      : "⏭️ Skipped. 📭 The queue is now empty.";
+
+    await interaction.reply(messageReply);
   } catch (error) {
     logger.error("Failed to execute /skip command", error);
     const errorMessage = "❌ Could not skip the current song.";
