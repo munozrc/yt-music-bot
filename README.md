@@ -48,6 +48,8 @@ cp .env.example .env
 npm run dev
 ```
 
+For production:
+
 ```bash
 npm run build
 npm start
