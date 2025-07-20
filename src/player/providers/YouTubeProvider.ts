@@ -4,7 +4,6 @@ import Stream, { PassThrough, Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 
 import { Innertube, UniversalCache } from "youtubei.js";
-import { type MusicResponsiveListItem } from "youtubei.js/dist/src/parser/nodes";
 
 import { logger } from "../../utils/logger";
 import { Track, type TrackData } from "../Track";
@@ -35,38 +34,72 @@ export class YouTubeProvider implements MusicProvider {
       throw new Error("YouTubeProvider not initialized");
     }
 
+    const { limit = 5 } = options;
+
     const search = await this.instance.music.search(query, { type: "song" });
     const results = search.songs?.contents ?? [];
 
     if (!results.length) {
-      logger.info(`No results were found for query: "${query}"`);
+      logger.info(`No results found for query: "${query}"`);
       return [];
     }
 
-    const songs = results
-      .filter((item: MusicResponsiveListItem) =>
-        Boolean(
-          item.duration?.seconds &&
-            item.thumbnails?.[0]?.url &&
-            item.artists?.length &&
-            item.title &&
-            item.id,
-        ),
-      )
-      .map(
-        (item: NonNullable<MusicResponsiveListItem>) =>
-          new Track({
-            title: item.title!,
-            artist: item.artists?.map((a) => a.name).join(" & ") ?? "Unknown",
-            duration: item.duration?.seconds ?? 0,
-            thumbnail: item.thumbnails![0]!.url,
-            requestedBy: "",
-            url: item.id!,
-          }),
-      )
-      .slice(0, options.limit ?? 5);
+    return results
+      .slice(0, limit)
+      .map(({ title, id, duration, thumbnails, artists }) => {
+        return new Track({
+          title: title ?? "Unknown Title",
+          artist: artists?.map((a) => a.name).join(" & ") || "Unknown",
+          duration: duration?.seconds ?? 0,
+          thumbnail: thumbnails?.[0]?.url ?? "https://default-thumbnail.png",
+          requestedBy: "",
+          url: id!,
+        });
+      });
+  }
 
-    return songs;
+  static async getRecommendations(
+    videoId: string,
+    options: { limit?: number } = {},
+  ): Promise<Track[]> {
+    if (!this.instance) {
+      throw new Error("YouTubeProvider not initialized");
+    }
+
+    const { limit = 10 } = options;
+
+    try {
+      const upNext = await this.instance.music.getUpNext(videoId, true);
+      const contents = upNext?.contents ?? [];
+
+      const normalizeContents = contents
+        .filter((item) => item.key("video_id")?.string() !== videoId)
+        .slice(0, limit);
+
+      return normalizeContents.map((item) => {
+        const duration = item.key("duration")?.object() as { seconds: number };
+        const titleObj = item.key("title")?.object() as { text: string };
+        const thumbnail = item.key("thumbnail").array()[0]?.url || "";
+        const artists =
+          item
+            .key("artists")
+            ?.array()
+            ?.map((a) => a.name)
+            .join(" & ") || "Unknown";
+
+        return new Track({
+          artist: artists,
+          duration: duration.seconds ?? 0,
+          title: titleObj.text ?? "Unknown Title",
+          url: item.key("video_id")?.string(),
+          requestedBy: "",
+          thumbnail,
+        });
+      });
+    } catch (error) {
+      logger.error(`Failed to get recommendations from URL: ${videoId}`, error);
+      throw new Error(`Failed to get recommendations from URL: ${videoId}`);
+    }
   }
 
   static async getStream(videoId: TrackData["url"]): Promise<Stream.Readable> {

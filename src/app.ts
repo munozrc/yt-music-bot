@@ -22,7 +22,6 @@ import { logger } from "./utils/logger";
 export class ApplicationClient {
   public client: Client;
   public commands: Collection<string, SlashCommand>;
-
   public player: Player;
   public rest: REST;
 

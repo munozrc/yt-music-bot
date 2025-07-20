@@ -7,6 +7,7 @@ import {
   VoiceConnection,
 } from "@discordjs/voice";
 
+import type { PlayerMode } from "../types/player.types";
 import { logger } from "../utils/logger";
 import { YouTubeProvider } from "./providers/YouTubeProvider";
 import { Queue } from "./Queue";
@@ -17,6 +18,7 @@ export class Player {
   private readonly audioPlayer: AudioPlayer;
   private voiceConnection: VoiceConnection | null = null;
   private currentResource: AudioResource | null = null;
+  private mode: PlayerMode = "normal";
   private volume: number = 0.1;
 
   constructor() {
@@ -25,14 +27,23 @@ export class Player {
   }
 
   private setupAudioPlayerEvents(): void {
-    this.audioPlayer.on(AudioPlayerStatus.Idle, () => {
+    this.audioPlayer.on(AudioPlayerStatus.Idle, async () => {
       logger.info("AudioPlayer is idle, checking for next track...");
 
       this.queue.advance();
-      const nextTrack = this.queue.current;
+      let nextTrack = this.queue.current;
+
+      if (!nextTrack && this.mode === "autoplay") {
+        logger.info(
+          "Queue empty. Autoplay mode enabled, fetching recommendations...",
+        );
+
+        await this.appendRecommendations();
+        nextTrack = this.queue.current;
+      }
 
       if (!nextTrack) {
-        logger.info("Queue finished. Disconnecting...");
+        logger.info("Queue finished. No more tracks to play.");
         return;
       }
 
@@ -105,6 +116,45 @@ export class Player {
     }
   }
 
+  private async appendRecommendations(): Promise<void> {
+    const lastTrack = this.queue.last;
+    if (!lastTrack) {
+      logger.warn("[Autoplay] No last track found in queue.");
+      return;
+    }
+
+    try {
+      logger.info(
+        `[Autoplay] Fetching recommendations based on: "${lastTrack.title}" (${lastTrack.url})`,
+      );
+
+      const recommendations = await YouTubeProvider.getRecommendations(
+        this.queue.last?.url,
+        { limit: 2 },
+      );
+
+      if (!recommendations.length) {
+        logger.warn(
+          `[Autoplay] No recommendations found for: "${lastTrack.title}"`,
+        );
+        return;
+      }
+
+      this.queue.addMany(recommendations);
+      logger.info(
+        `[Autoplay] Added ${recommendations.length} recommended track(s) to the queue.`,
+      );
+    } catch (error) {
+      logger.error(
+        `[Autoplay] Failed to fetch or add recommendations for: "${lastTrack.title}"`,
+        error,
+      );
+      throw new Error(
+        `Autoplay failed: Could not fetch recommendations for "${lastTrack.title}".`,
+      );
+    }
+  }
+
   skip(): boolean {
     if (this.audioPlayer.state.status === AudioPlayerStatus.Idle) {
       logger.warn("Cannot skip. No track is currently playing.");
@@ -151,8 +201,24 @@ export class Player {
       return;
     }
 
-    logger.info("Disconnecting from voice channel...");
-    this.voiceConnection.destroy();
-    this.voiceConnection = null;
+    logger.info("🔌 Disconnecting from voice channel and resetting player...");
+
+    try {
+      if (this.audioPlayer.state.status !== AudioPlayerStatus.Idle) {
+        this.audioPlayer.stop(true);
+        logger.debug("AudioPlayer stopped.");
+      }
+
+      this.currentResource = null;
+      this.queue.clear();
+      logger.debug("Queue cleared.");
+
+      this.voiceConnection.destroy();
+      this.voiceConnection = null;
+
+      logger.info("✅ Successfully disconnected and reset.");
+    } catch (err) {
+      logger.error("❌ Error during disconnect:", err);
+    }
   }
 }

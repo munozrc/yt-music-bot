@@ -8,12 +8,21 @@ export class Queue {
     return this.tracks[this.currentIndex] || null;
   }
 
+  get last(): Track | null {
+    return this.tracks[this.tracks.length - 1] || null;
+  }
+
   get isEmpty(): boolean {
     return this.tracks.length === 0;
   }
 
   add(track: Track): void {
     this.tracks.push(track);
+  }
+
+  addMany(tracks: Track[]): void {
+    if (!tracks.length) return;
+    this.tracks.push(...tracks);
   }
 
   advance(): void {
