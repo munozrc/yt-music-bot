@@ -9,4 +9,5 @@ export const tsup: Options = {
   shims: true,
   skipNodeModulesBundle: true,
   splitting: true,
+  outExtension: () => ({ js: ".mjs" }),
 };
