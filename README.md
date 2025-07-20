@@ -6,6 +6,7 @@
 
 - 🔥 Play music directly from YouTube links or search queries
 - 🎶 Supports playlists and individual tracks
+- 🔁 Autoplay: automatically plays related songs after the queue ends
 - ⏯️ Controls: play, pause, skip, stop, volume, queue
 - 📜 Slash command support (`/play`, `/skip`, etc.)
 
@@ -40,7 +41,6 @@ cp .env.example .env
 | `CLIENT_ID`     | Your bot’s application client ID.                          |
 | `GUILD_ID`      | (Optional) Guild ID for testing slash commands.            |
 | `DEBUG`         | (Optional) Enable detailed debug logs (`true` or `false`). |
-
 
 ## ▶️ Run the bot
 
