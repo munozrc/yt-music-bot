@@ -70,7 +70,7 @@ export class Player {
     });
   }
 
-  joinVoiceChannel(connection: VoiceConnection): void {
+  public joinVoiceChannel(connection: VoiceConnection): void {
     if (this.voiceConnection) {
       logger.warn("Already connected to a voice channel.");
       this.disconnect();
@@ -81,7 +81,7 @@ export class Player {
     logger.info("Joined voice channel and subscribed to AudioPlayer.");
   }
 
-  async play(
+  public async play(
     song: Omit<TrackData, "requestedBy">,
     requestedBy: string,
   ): Promise<void> {
@@ -155,7 +155,7 @@ export class Player {
     }
   }
 
-  skip(): boolean {
+  public skip(): boolean {
     if (this.audioPlayer.state.status === AudioPlayerStatus.Idle) {
       logger.warn("Cannot skip. No track is currently playing.");
       return false;
@@ -165,22 +165,6 @@ export class Player {
     this.audioPlayer.stop(true);
 
     return this.queue.current !== null;
-  }
-
-  pause(): void {
-    if (this.audioPlayer.pause()) {
-      logger.info("Playback paused.");
-    } else {
-      logger.warn("Failed to pause. Is there a track playing?");
-    }
-  }
-
-  resume(): void {
-    if (this.audioPlayer.unpause()) {
-      logger.info("Playback resumed.");
-    } else {
-      logger.warn("Failed to resume. Was playback paused?");
-    }
   }
 
   public setVolume(volume: number): void {
@@ -195,7 +179,7 @@ export class Player {
     logger.info(`🔊 Volume changed to ${Math.round(volume * 100)}%`);
   }
 
-  disconnect(): void {
+  public disconnect(): void {
     if (!this.voiceConnection) {
       logger.warn("No active voice connection to disconnect.");
       return;
@@ -220,5 +204,10 @@ export class Player {
     } catch (err) {
       logger.error("❌ Error during disconnect:", err);
     }
+  }
+
+  public setMode(mode: PlayerMode): void {
+    this.mode = mode;
+    logger.info(`🔄 Playback mode updated: ${mode}`);
   }
 }
