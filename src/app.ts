@@ -81,7 +81,7 @@ export class ApplicationClient {
       const categoryPath = path.join(commandsPath, folder);
       const commandFiles = fs
         .readdirSync(categoryPath)
-        .filter((file) => file.endsWith(".ts") || file.endsWith(".js"));
+        .filter((file) => file.endsWith(".ts") || file.endsWith(".mjs"));
 
       for (const file of commandFiles) {
         const filePath = path.join(categoryPath, file);

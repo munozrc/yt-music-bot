@@ -19,7 +19,7 @@ export class Player {
   private voiceConnection: VoiceConnection | null = null;
   private currentResource: AudioResource | null = null;
   private mode: PlayerMode = "normal";
-  private volume: number = 0.1;
+  private volume: number = 0.05;
 
   constructor() {
     this.audioPlayer = createAudioPlayer();
@@ -102,8 +102,8 @@ export class Player {
     try {
       logger.info(`[PLAYING] Preparing to play: ${track.title}`);
 
-      const stream = await YouTubeProvider.downloadAndCache(track.url);
-      const resource = createAudioResource(stream, { inlineVolume: true });
+      const filePath = await YouTubeProvider.downloadAndCache(track.url);
+      const resource = createAudioResource(filePath, { inlineVolume: true });
 
       resource.volume?.setVolume(this.volume);
       this.currentResource = resource;
@@ -130,7 +130,7 @@ export class Player {
 
       const recommendations = await YouTubeProvider.getRecommendations(
         this.queue.last?.url,
-        { limit: 2 },
+        { limit: 10 },
       );
 
       if (!recommendations.length) {
