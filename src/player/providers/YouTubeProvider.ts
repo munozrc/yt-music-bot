@@ -1,13 +1,23 @@
 import { createWriteStream, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
-import Stream, { PassThrough, Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 
-import { Innertube, UniversalCache } from "youtubei.js";
+import { Innertube, Platform, type Types, UniversalCache } from "youtubei.js";
 
 import { logger } from "../../utils/logger";
-import { Track, type TrackData } from "../Track";
+import { Track } from "../Track";
 import { MusicProvider } from "./MusicProvider";
+
+Platform.shim.eval = async (
+  data: Types.BuildScriptResult,
+  env: Record<string, Types.VMPrimative>,
+) => {
+  const properties = [];
+  if (env.n) properties.push(`n: exportedVars.nFunction("${env.n}")`);
+  if (env.sig) properties.push(`sig: exportedVars.sigFunction("${env.sig}")`);
+  const code = `${data.output}\nreturn { ${properties.join(", ")} }`;
+  return new Function(code)();
+};
 
 export class YouTubeProvider implements MusicProvider {
   private static instance?: Innertube;
@@ -99,37 +109,6 @@ export class YouTubeProvider implements MusicProvider {
     } catch (error) {
       logger.error(`Failed to get recommendations from URL: ${videoId}`, error);
       throw new Error(`Failed to get recommendations from URL: ${videoId}`);
-    }
-  }
-
-  static async getStream(videoId: TrackData["url"]): Promise<Stream.Readable> {
-    if (!this.instance) {
-      throw new Error("YouTubeProvider not initialized");
-    }
-
-    try {
-      logger.debug(`Get stream for url=${videoId}`);
-      const streamedTrackWeb = await this.instance.download(videoId, {
-        type: "video+audio",
-        quality: "bestefficiency",
-        client: "YTMUSIC",
-        format: "mp4",
-      });
-
-      const streamedTrack = Readable.from(streamedTrackWeb);
-      const bufferStream = new PassThrough();
-
-      streamedTrack.pipe(bufferStream);
-
-      streamedTrack.on("error", (err) => {
-        logger.error(`Stream error for videoId=${videoId}`, err);
-        bufferStream.destroy(err);
-      });
-
-      return bufferStream;
-    } catch (error) {
-      logger.error(`Failed to get audio stream from URL: ${videoId}`, error);
-      throw new Error(`Failed to get audio stream from URL: ${videoId}`);
     }
   }
 
