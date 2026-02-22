@@ -47,8 +47,5 @@
     "libsodium-wrappers": "0.7.15",
     "youtubei.js": "16.0.1",
     "zod": "3.25.74"
-  },
-  "engines": {
-    "node": "20.11.1"
   }
 }
