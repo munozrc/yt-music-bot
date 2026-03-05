@@ -1,17 +1,60 @@
 {
+  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-    "module": "ESNext",
-    "target": "ES2020",
-    "moduleResolution": "node",
-    "rootDir": "src",
-    "outDir": "dist",
-    "declaration": false,
-    "sourceMap": false,
-    "removeComments": true,
+    // File Layout
+    // "rootDir": "./src",
+    // "outDir": "./dist",
+    "baseUrl": ".",
+
+    "paths": {
+      "@/*": ["src/*"]
+    },
+
+    // Environment Settings
+    // See also https://aka.ms/tsconfig/module
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    // "target": "esnext",
+    "types": ["node"],
+    // For nodejs:
+    // "lib": ["esnext"],
+    // "types": ["node"],
+    // and npm install -D @types/node
+
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Allow JSON modules to be imported
+    // "resolveJsonModule": true,
+    // Use correct ESM import behavior
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
+    "noEmit": true, // or `emitDeclarationOnly`
+    "allowImportingTsExtensions": true,
+    "allowArbitraryExtensions": true,
+
+    // Style Options
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+
+    // Recommended Options
     "strict": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "include": ["src"]
+
+  "include": ["src/**/*", "./eslint.config.mjs"],
+  "exclude": ["node_modules", "dist"]
 }

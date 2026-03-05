@@ -1,51 +1,27 @@
 {
   "name": "yt-music-bot",
   "version": "1.0.0",
-  "description": "🎵 A Discord music bot built with TypeScript that streams music from YouTube 🔥",
+  "description": "A Discord music bot built with TypeScript that streams music from YouTube",
   "scripts": {
-    "start": "node dist/index.mjs",
-    "dev": "nodemon --watch src --ext ts --exec tsx src/index.ts",
-    "build": "tsup",
-    "format:fix": "prettier --write .",
-    "format": "prettier --check .",
-    "lint:fix": "eslint --fix .",
-    "lint": "eslint ."
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/munozrc/yt-music-bot.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/munozrc/yt-music-bot/issues"
-  },
-  "homepage": "https://github.com/munozrc/yt-music-bot#readme",
-  "devDependencies": {
-    "@eslint/js": "9.30.1",
-    "@types/node": "24.0.10",
-    "eslint": "9.30.1",
-    "eslint-config-prettier": "10.1.5",
-    "eslint-plugin-prettier": "5.5.1",
-    "eslint-plugin-simple-import-sort": "12.1.1",
-    "globals": "16.3.0",
-    "nodemon": "3.1.10",
-    "prettier": "3.6.2",
-    "tsup": "8.5.0",
-    "tsx": "4.20.3",
-    "typescript": "5.8.3",
-    "typescript-eslint": "8.35.1"
-  },
+  "license": "AGPL-3.0-only",
+  "packageManager": "pnpm@10.30.3",
   "dependencies": {
-    "@discordjs/opus": "github:discordjs/opus",
-    "@discordjs/voice": "0.18.0",
-    "chalk": "5.4.1",
-    "discord.js": "14.21.0",
-    "dotenv": "17.0.1",
-    "ffmpeg-static": "5.2.0",
-    "libsodium-wrappers": "0.7.15",
-    "youtubei.js": "16.0.1",
-    "zod": "3.25.74"
+    "discord.js": "14.25.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "25.3.3",
+    "eslint": "10.0.2",
+    "eslint-plugin-simple-import-sort": "12.1.1",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.56.1"
+  },
+  "engines": {
+    "node": "22.13.1"
   }
 }

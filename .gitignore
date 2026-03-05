@@ -1,5 +1,13 @@
+# Dependencies
+node_modules/
 .cache/
+
+# Build output (TypeScript to JS)
+dist/
+
+# Environment variables
 .env
-dist
-node_modules
-package-lock.json
+
+# Logs and system files
+*.log
+.DS_Store
