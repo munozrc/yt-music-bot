@@ -9,7 +9,7 @@ import { env } from "./config/env";
 import { logger } from "./config/logger";
 
 async function main() {
-  const container = buildContainer();
+  const container = await buildContainer();
 
   // Generate and log the Discord.js Voice dependency report for debugging purposes
   logger.debug("🧪 Discord.js Voice dependency report:");

@@ -17,7 +17,7 @@ export interface Container {
   leave: LeaveUseCase;
 }
 
-export function buildContainer(): Container {
+export async function buildContainer(): Promise<Container> {
   const client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
@@ -31,7 +31,7 @@ export function buildContainer(): Container {
 
   // Infrastructure adapters
   const sessionRepo = new InMemoryMusicSessionRepository();
-  const audioProvider = new YoutubeAudioProvider();
+  const audioProvider = await YoutubeAudioProvider.create();
 
   // Discord adapters
   const audioPlayer = new AudioPlayerAdapter(audioProvider);

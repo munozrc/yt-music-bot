@@ -5,6 +5,7 @@ import type { TrackUrl } from "../value-objects/TrackUrl";
 export interface TrackProps {
   url: TrackUrl;
   title: string;
+  author: string;
   durationSeconds: number;
   requestedBy: string; // Discord user ID
   thumbnailUrl: string;
