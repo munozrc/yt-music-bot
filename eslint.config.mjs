@@ -15,4 +15,7 @@ export default defineConfig(
       "simple-import-sort/exports": "error",
     },
   },
+  {
+    ignores: ["dist/", "node_modules/"],
+  },
 );

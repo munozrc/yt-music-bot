@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "A Discord music bot built with TypeScript that streams music from YouTube",
   "scripts": {
-    "start": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts"
+    "start": "tsx src/main.ts",
+    "dev": "tsx watch src/main.ts"
   },
   "license": "AGPL-3.0-only",
   "packageManager": "pnpm@10.30.3",

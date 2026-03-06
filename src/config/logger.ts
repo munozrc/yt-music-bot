@@ -1,6 +1,6 @@
 import chalk from "chalk";
 
-import { config } from "../system/config";
+import { env } from "./env";
 
 function getTimestamp(): string {
   return chalk.gray(
@@ -31,7 +31,7 @@ export const logger = {
     log("SUCCESS", chalk.green, ...message);
   },
   debug: (...message: unknown[]): void => {
-    if (config.DEBUG === "true") {
+    if (env.DEBUG === "true") {
       log("DEBUG", chalk.magenta, ...message);
     }
   },
