@@ -37,12 +37,16 @@ async function main() {
   );
 
   const rest = new REST().setToken(env.DISCORD_TOKEN);
-  await rest.put(
-    env.DEBUG === "true"
-      ? Routes.applicationCommands(env.CLIENT_ID)
-      : Routes.applicationGuildCommands(env.CLIENT_ID, env.SERVER_ID),
-    { body: commandHandler.toJSON() },
-  );
+  const isDebug = env.DEBUG === "true";
+
+  // Use guild-specific commands in debug mode for faster updates, and global commands in production
+  const route = isDebug
+    ? Routes.applicationGuildCommands(env.CLIENT_ID, env.SERVER_ID)
+    : Routes.applicationCommands(env.CLIENT_ID);
+
+  await rest.put(route, {
+    body: commandHandler.toJSON(),
+  });
 
   logger.success("✅ Slash commands registered with Discord API");
 
