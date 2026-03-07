@@ -1,6 +1,6 @@
 import { ValueObject } from "@/core/shared/domain/ValueObject";
 
-export const DEFAULT_VOLUME = 100;
+export const DEFAULT_VOLUME = 3;
 export const MIN_VOLUME = 0;
 export const MAX_VOLUME = 200;
 

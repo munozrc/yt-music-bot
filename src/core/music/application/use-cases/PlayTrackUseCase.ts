@@ -47,7 +47,7 @@ export class PlayTrackUseCase {
       const connection = this.voiceAdapter.getConnection(cmd.guildId);
       if (!connection) throw new Error("No voice connection available");
 
-      await this.audioPlayer.play(track, connection);
+      await this.audioPlayer.play(track, connection, session.volume);
       this.registerTrackEndHandler(guildId);
     }
 
@@ -107,7 +107,7 @@ export class PlayTrackUseCase {
       if (nextTrack) {
         const connection = this.voiceAdapter.getConnection(guildId.getValue());
         if (!connection) return;
-        await this.audioPlayer.play(nextTrack, connection);
+        await this.audioPlayer.play(nextTrack, connection, session.volume);
       }
     });
   }

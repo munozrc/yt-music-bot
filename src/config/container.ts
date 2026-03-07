@@ -1,7 +1,13 @@
 import { Client, GatewayIntentBits } from "discord.js";
 
+import { GetQueueUseCase } from "@/core/music/application/use-cases/GetQueueUseCase";
 import { LeaveUseCase } from "@/core/music/application/use-cases/LeaveUseCase";
 import { PlayTrackUseCase } from "@/core/music/application/use-cases/PlayTrackUseCase";
+import { ResumeUseCase } from "@/core/music/application/use-cases/ResumeUseCase";
+import { SetLoopUseCase } from "@/core/music/application/use-cases/SetLoopUseCase";
+import { SetVolumeUseCase } from "@/core/music/application/use-cases/SetVolumeUseCase";
+import { SkipTrackUseCase } from "@/core/music/application/use-cases/SkipTrackUseCase";
+import { StopUseCase } from "@/core/music/application/use-cases/StopUseCase";
 import { AudioPlayerAdapter } from "@/core/music/infrastructure/audio/AudioPlayerAdapter";
 import { YoutubeAudioProvider } from "@/core/music/infrastructure/audio/YoutubeAudioProvider";
 import { DiscordVoiceAdapter } from "@/core/music/infrastructure/discord/DiscordVoiceAdapter";
@@ -13,8 +19,15 @@ export interface Container {
   client: Client;
 
   // Use cases (consumed by bot/commands/)
-  playTrack: PlayTrackUseCase;
+  getQueue: GetQueueUseCase;
   leave: LeaveUseCase;
+  pause: ResumeUseCase;
+  playTrack: PlayTrackUseCase;
+  resume: ResumeUseCase;
+  setLoop: SetLoopUseCase;
+  setVolume: SetVolumeUseCase;
+  skipTrack: SkipTrackUseCase;
+  stop: StopUseCase;
 }
 
 export async function buildContainer(): Promise<Container> {
@@ -50,5 +63,18 @@ export async function buildContainer(): Promise<Container> {
     ),
 
     leave: new LeaveUseCase(sessionRepo, audioPlayer, voiceAdapter, eventBus),
+    getQueue: new GetQueueUseCase(sessionRepo),
+    setVolume: new SetVolumeUseCase(sessionRepo, audioPlayer),
+    setLoop: new SetLoopUseCase(sessionRepo),
+    stop: new StopUseCase(sessionRepo, audioPlayer, eventBus),
+    resume: new ResumeUseCase(sessionRepo, audioPlayer),
+    pause: new ResumeUseCase(sessionRepo, audioPlayer),
+
+    skipTrack: new SkipTrackUseCase(
+      sessionRepo,
+      audioPlayer,
+      voiceAdapter,
+      eventBus,
+    ),
   };
 }

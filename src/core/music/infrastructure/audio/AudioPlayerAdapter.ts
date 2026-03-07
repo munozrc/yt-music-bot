@@ -47,12 +47,18 @@ export class AudioPlayerAdapter {
     return this;
   }
 
-  async play(track: Track, connection: VoiceConnection): Promise<void> {
+  async play(
+    track: Track,
+    connection: VoiceConnection,
+    volume = Volume.default(),
+  ): Promise<void> {
     const { resource: stream } = await this.audioProvider.stream(track);
 
     this.currentResource = createAudioResource(stream, {
       inlineVolume: true,
     });
+
+    this.currentResource.volume?.setVolume(volume.normalized);
 
     this.currentTrack = track;
     connection.subscribe(this.player);

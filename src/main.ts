@@ -1,8 +1,16 @@
 import { generateDependencyReport } from "@discordjs/voice";
 import { Events, REST, Routes } from "discord.js";
 
-import { LeaveCommand } from "./bot/commands/LeaveCommand";
-import { PlayCommand } from "./bot/commands/PlayCommand";
+import {
+  LeaveCommand,
+  LoopCommand,
+  PlayCommand,
+  QueueCommand,
+  ResumeCommand,
+  SkipCommand,
+  StopCommand,
+  VolumeCommand,
+} from "./bot/commands";
 import { CommandHandler } from "./bot/handlers/CommandHandler";
 import { buildContainer } from "./config/container";
 import { env } from "./config/env";
@@ -17,7 +25,16 @@ async function main() {
 
   // Register slash commands
   const commandHandler = new CommandHandler(container);
-  commandHandler.register(new PlayCommand(), new LeaveCommand());
+  commandHandler.register(
+    new PlayCommand(),
+    new LeaveCommand(),
+    new SkipCommand(),
+    new StopCommand(),
+    new QueueCommand(),
+    new VolumeCommand(),
+    new LoopCommand(),
+    new ResumeCommand(),
+  );
 
   const rest = new REST().setToken(env.DISCORD_TOKEN);
   await rest.put(
