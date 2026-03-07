@@ -36,6 +36,7 @@ export class AudioPlayerAdapter {
   private currentResource: AudioResource | null = null;
   private currentTrack: Track | null = null;
   private callbacks: Partial<PlayerEventMap> = {};
+  private isManualStop = false;
 
   constructor(private readonly audioProvider: AudioProvider) {
     this.player = createAudioPlayer();
@@ -76,6 +77,7 @@ export class AudioPlayerAdapter {
   }
 
   stop(): void {
+    this.isManualStop = true;
     this.player.stop(true);
     this.currentTrack = null;
     this.currentResource = null;
@@ -99,6 +101,11 @@ export class AudioPlayerAdapter {
 
       this.currentTrack = null;
       this.currentResource = null;
+
+      if (this.isManualStop) {
+        this.isManualStop = false;
+        return; // Don't emit events if stop() was called
+      }
 
       if (ended) this.callbacks.trackEnd?.(ended);
       this.callbacks.idle?.();
