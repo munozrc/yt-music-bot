@@ -37,7 +37,9 @@ export class PauseCommand implements SlashCommand {
       return;
     }
 
-    await container.pause.execute({ guildId: interaction.guildId as string });
+    await container.pause.execute({
+      guildId: interaction.guildId as string,
+    });
 
     await interaction.reply("⏸️ Paused.");
   }

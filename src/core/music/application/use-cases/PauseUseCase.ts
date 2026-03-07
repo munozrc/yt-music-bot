@@ -17,11 +17,18 @@ export class PauseUseCase {
       GuildId.create(cmd.guildId),
     );
 
-    if (!session) throw new Error("No active session in this server");
-    if (!session.isPlaying) throw new Error("Nothing is playing right now");
+    if (!session) {
+      throw new Error("No active session in this server");
+    }
+
+    if (!session.isPlaying) {
+      throw new Error("Nothing is playing right now");
+    }
 
     session.pause(); // domain state
     this.audioPlayer.pause(); // infrastructure
+
+    // Persist session changes (isPaused = true)
     await this.sessionRepo.save(session);
   }
 }

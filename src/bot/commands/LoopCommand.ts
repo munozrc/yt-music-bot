@@ -56,7 +56,6 @@ export class LoopCommand implements SlashCommand {
     }
 
     const mode = interaction.options.getString("mode", true) as LoopMode;
-
     await container.setLoop.execute({
       guildId: interaction.guildId as string,
       mode,

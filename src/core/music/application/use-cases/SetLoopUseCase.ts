@@ -15,7 +15,9 @@ export class SetLoopUseCase {
       GuildId.create(cmd.guildId),
     );
 
-    if (!session) throw new Error("No active session in this server");
+    if (!session) {
+      throw new Error("No active session in this server");
+    }
 
     session.setLoopMode(cmd.mode);
     await this.sessionRepo.save(session);

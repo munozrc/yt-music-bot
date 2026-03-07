@@ -107,6 +107,7 @@ export class PlayTrackUseCase {
       if (nextTrack) {
         const connection = this.voiceAdapter.getConnection(guildId.getValue());
         if (!connection) return;
+
         await this.audioPlayer.play(nextTrack, connection, session.volume);
       }
     });

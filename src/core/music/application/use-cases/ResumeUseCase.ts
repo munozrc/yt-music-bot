@@ -17,11 +17,18 @@ export class ResumeUseCase {
       GuildId.create(cmd.guildId),
     );
 
-    if (!session) throw new Error("No active session in this server");
-    if (!session.isPaused) throw new Error("Playback is not paused");
+    if (!session) {
+      throw new Error("No active session in this server");
+    }
+
+    if (!session.isPaused) {
+      throw new Error("Playback is not paused");
+    }
 
     session.resume(); // domain state
     this.audioPlayer.resume(); // infrastructure
+
+    // Persist session changes (isPaused = false)
     await this.sessionRepo.save(session);
   }
 }

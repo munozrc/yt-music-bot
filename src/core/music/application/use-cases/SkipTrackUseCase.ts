@@ -48,6 +48,7 @@ export class SkipTrackUseCase {
       await this.audioPlayer.play(next, connection, session.volume);
     }
 
+    // Publish domain events (TrackEnded, TrackStarted/QueueEmpty)
     await this.eventBus.publish(session.pullDomainEvents());
 
     return {

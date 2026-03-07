@@ -24,10 +24,14 @@ export class StopUseCase {
       GuildId.create(cmd.guildId),
     );
 
-    if (!session) throw new Error("No active session in this server");
+    if (!session) {
+      throw new Error("No active session in this server");
+    }
 
     session.stop(); // domain: clears queue, emits TrackEnded + QueueEmpty
     this.audioPlayer.stop(); // infrastructure
+
+    // Persist session changes and publish domain events
     await this.sessionRepo.save(session);
     await this.eventBus.publish(session.pullDomainEvents());
   }
