@@ -118,13 +118,13 @@ export class YoutubeAudioProvider implements AudioProvider {
     }
 
     const videoId = this.extractVideoId(track.url.getValue());
-    const filename = `yt-provider-${videoId}.webm`;
+    const filename = `yt-provider-${videoId}.mp4`;
     const filePath = path.resolve(cacheDir, filename);
 
     if (existsSync(filePath)) {
       return {
         resource: filePath,
-        mimeType: "audio/webm",
+        mimeType: "audio/mp4",
       };
     }
 
@@ -155,7 +155,7 @@ export class YoutubeAudioProvider implements AudioProvider {
 
       return {
         resource: filePath,
-        mimeType: "audio/webm",
+        mimeType: "audio/mp4",
       };
     } catch (error) {
       logger.error(`Failed to download ${videoId}:`, error);
