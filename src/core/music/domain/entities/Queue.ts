@@ -2,7 +2,7 @@ import { Entity } from "@/core/shared/domain/Entity";
 
 import type { Track } from "./Track";
 
-export type LoopMode = "none" | "track" | "queue";
+export type LoopMode = "none" | "track" | "queue" | "autoplay";
 
 export class Queue extends Entity<string> {
   private _tracks: Track[];
@@ -66,7 +66,7 @@ export class Queue extends Entity<string> {
       return this.currentTrack;
     }
 
-    // 'none' mode
+    // 'none' and 'autoplay' mode — autoplay prefetch is handled in the application layer
     this._tracks.shift(); // remove current
     // _currentIndex stays at 0, pointing to next track
     return this.currentTrack;

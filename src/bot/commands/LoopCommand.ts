@@ -14,6 +14,7 @@ const LOOP_LABELS: Record<LoopMode, string> = {
   none: "➡️  Off",
   track: "🔂  Track",
   queue: "🔁  Queue",
+  autoplay: "♾️  Autoplay",
 };
 
 export class LoopCommand implements SlashCommand {
@@ -29,6 +30,7 @@ export class LoopCommand implements SlashCommand {
           { name: "Off", value: "none" },
           { name: "Track", value: "track" },
           { name: "Queue", value: "queue" },
+          { name: "Autoplay", value: "autoplay" },
         ),
     );
 

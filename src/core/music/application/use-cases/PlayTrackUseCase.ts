@@ -1,3 +1,4 @@
+import { logger } from "@/config/logger";
 import type { EventBus } from "@/core/shared/infrastructure/EventBus";
 
 import { MusicSession } from "../../domain/entities/MusicSession";
@@ -54,7 +55,11 @@ export class PlayTrackUseCase {
     // 5. Publish domain events
     await this.eventBus.publish(session.pullDomainEvents());
 
-    return { track, playingNow: shouldStartNow, queuePosition };
+    return {
+      track,
+      playingNow: shouldStartNow,
+      queuePosition,
+    };
   }
 
   /**
@@ -68,7 +73,14 @@ export class PlayTrackUseCase {
   }): Promise<{ session: MusicSession; created: boolean }> {
     // Reuse existing session (idempotent)
     const existing = await this.sessionRepo.findByGuildId(params.guildId);
-    if (existing) return { session: existing, created: false };
+
+    // If already in a session, return it (no-op)
+    if (existing) {
+      return {
+        session: existing,
+        created: false,
+      };
+    }
 
     // Connect to voice — adapter handles adapterCreator internally
     await this.voiceAdapter.join(
@@ -98,6 +110,27 @@ export class PlayTrackUseCase {
     this.audioPlayer.on("idle", async () => {
       const session = await this.sessionRepo.findByGuildId(guildId);
       if (!session) return;
+
+      // Autoplay prefetch: when the current track is the last one in the queue,
+      // fetch 5 recommendations based on it before advancing.
+      if (
+        session.queue.loopMode === "autoplay" &&
+        session.queue.upcomingTracks.length === 0 &&
+        session.currentTrack
+      ) {
+        try {
+          const recs = await this.audioProvider.getRecommendations(
+            session.currentTrack,
+            5,
+          );
+          session.queue.enqueueMany(recs);
+        } catch {
+          // Graceful fallback: log and let the session end idle normally
+          logger.warn(
+            `[Autoplay] Failed to fetch recommendations for guild ${guildId.getValue()}, ending session.`,
+          );
+        }
+      }
 
       const nextTrack = session.onTrackFinished();
 

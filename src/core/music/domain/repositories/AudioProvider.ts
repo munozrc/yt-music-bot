@@ -28,4 +28,9 @@ export interface AudioProvider {
    * Whether this provider can handle the given query.
    */
   supports(query: string): boolean;
+
+  /**
+   * Get recommended tracks based on a seed track (e.g. for autoplay).
+   */
+  getRecommendations(seedTrack: Track, count: number): Promise<Track[]>;
 }

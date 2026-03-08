@@ -29,7 +29,7 @@ import { TrackUrl } from "../../domain/value-objects/TrackUrl";
 export class YoutubeAudioProvider implements AudioProvider {
   private client: Innertube;
   private static readonly YOUTUBE_REGEX =
-    /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
+    /^(https?:\/\/)?((www\.|music\.)?youtube\.com|youtu\.be)\/.+/;
 
   private constructor(innertube: Innertube) {
     this.client = innertube;
@@ -86,10 +86,12 @@ export class YoutubeAudioProvider implements AudioProvider {
             .map((artist) => artist.name ?? "Unknown Artist")
             .join(", ")
         : (item.author?.name ?? "Unknown Artist");
+      const duration = item.duration?.seconds ?? 0;
 
       return {
         artists,
         title: item.title ?? "Unknown Title",
+        durationSeconds: duration,
         videoId: item.id,
       };
     });
@@ -102,7 +104,7 @@ export class YoutubeAudioProvider implements AudioProvider {
     return Track.create(firstSong.videoId ?? "", {
       title: firstSong.title,
       thumbnailUrl: `https://i.ytimg.com/vi/${firstSong.videoId}/hqdefault.jpg`,
-      durationSeconds: 0,
+      durationSeconds: firstSong.durationSeconds,
       url: TrackUrl.create(
         `https://www.youtube.com/watch?v=${firstSong.videoId}`,
       ),
@@ -160,6 +162,52 @@ export class YoutubeAudioProvider implements AudioProvider {
     } catch (error) {
       logger.error(`Failed to download ${videoId}:`, error);
       throw new Error(`Failed to download and cache track: ${track.title}`);
+    }
+  }
+
+  async getRecommendations(seedTrack: Track, count: number): Promise<Track[]> {
+    try {
+      const videoId = this.extractVideoId(seedTrack.url.getValue());
+      const upNext = await this.client.music.getUpNext(videoId, true);
+      const contents = upNext?.contents ?? [];
+
+      const normalizeContents = contents
+        .filter((item) => item.key("video_id")?.string() !== videoId)
+        .slice(0, count);
+
+      return normalizeContents.map((song) => {
+        const duration = song.key("duration")?.object() as { seconds: number };
+        const titleObj = song.key("title")?.object() as { text: string };
+        const thumbnail = song.key("thumbnail").array()[0]?.url || "";
+        const artists =
+          song
+            .key("artists")
+            ?.array()
+            ?.map((a) => a.name)
+            .join(" & ") || "Unknown";
+
+        return Track.create(
+          this.extractVideoId(song.key("video_id")?.string() ?? ""),
+          {
+            title: titleObj.text ?? "Unknown Title",
+            thumbnailUrl: thumbnail,
+            durationSeconds: duration.seconds ?? 0,
+            url: TrackUrl.create(
+              `https://www.youtube.com/watch?v=${song.key("video_id")?.string()}`,
+            ),
+            author: artists,
+            requestedBy: "bot",
+          },
+        );
+      });
+    } catch (error) {
+      logger.error(
+        `Failed to get recommendations from track: ${seedTrack.id}`,
+        error,
+      );
+      throw new Error(
+        `Failed to get recommendations from track: ${seedTrack.id}`,
+      );
     }
   }
 
