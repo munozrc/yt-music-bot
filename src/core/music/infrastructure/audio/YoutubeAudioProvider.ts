@@ -1,20 +1,11 @@
 import { createWriteStream, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
-import {
-  BG,
-  buildURL,
-  GOOG_API_KEY,
-  USER_AGENT,
-  type WebPoSignalOutput,
-} from "bgutils-js";
-import { JSDOM } from "jsdom";
 import Innertube, {
   Platform,
   type Types,
   UniversalCache,
   Utils,
-  YTNodes,
 } from "youtubei.js";
 
 import { logger } from "@/config/logger";
@@ -54,9 +45,7 @@ export class YoutubeAudioProvider implements AudioProvider {
     };
 
     const innertube = await Innertube.create({
-      user_agent: USER_AGENT,
       cache: new UniversalCache(true),
-      enable_session_cache: false,
       player_id: "140dafda",
     });
 
@@ -72,72 +61,52 @@ export class YoutubeAudioProvider implements AudioProvider {
   }
 
   async resolve(query: string, requestedBy: string): Promise<Track> {
-    const results = await this.client.music.search(query);
+    try {
+      if (
+        YoutubeAudioProvider.YOUTUBE_REGEX.test(query) &&
+        !query.startsWith("http")
+      ) {
+        const videoId = this.extractVideoId(query);
+        return this.getVideoInfo(videoId, requestedBy);
+      }
 
-    // Navigate to the MusicShelf node containing the search results
-    const musicShelf = results.contents?.[1]?.as(YTNodes.MusicShelf);
-    const rawItems =
-      musicShelf?.contents.as(YTNodes.MusicResponsiveListItem) ?? [];
+      // When query is not a URL, treat it as a search term and take the first result
+      const [firstResult] = await this.search(query, requestedBy, 1);
+      if (!firstResult) {
+        throw new Error("No search results found for query: " + query);
+      }
 
-    // Map raw items to SearchResult format
-    const songs = rawItems.map((item) => {
-      const artists = item.artists?.length
-        ? item.artists
-            .map((artist) => artist.name ?? "Unknown Artist")
-            .join(", ")
-        : (item.author?.name ?? "Unknown Artist");
-      const duration = item.duration?.seconds ?? 0;
-
-      return {
-        artists,
-        title: item.title ?? "Unknown Title",
-        durationSeconds: duration,
-        videoId: item.id,
-      };
-    });
-
-    const [firstSong] = songs.filter((song) => song.videoId);
-    if (!firstSong) {
-      throw new Error(`No valid YouTube results found for query: "${query}"`);
+      return firstResult;
+    } catch (error) {
+      logger.error(`Failed to resolve track for query: ${query}`, error);
+      throw new Error(`Failed to resolve track for query: ${query}`);
     }
-
-    return Track.create(firstSong.videoId ?? "", {
-      title: firstSong.title,
-      thumbnailUrl: `https://i.ytimg.com/vi/${firstSong.videoId}/hqdefault.jpg`,
-      durationSeconds: firstSong.durationSeconds,
-      url: TrackUrl.create(
-        `https://www.youtube.com/watch?v=${firstSong.videoId}`,
-      ),
-      author: firstSong.artists,
-      requestedBy,
-    });
   }
 
   async stream(track: Track): Promise<AudioStream> {
-    const cacheDir = path.resolve(process.cwd(), ".cache");
-    if (!existsSync(cacheDir)) {
-      mkdirSync(cacheDir);
-    }
-
-    const videoId = this.extractVideoId(track.url.getValue());
-    const filename = `yt-provider-${videoId}.mp4`;
-    const filePath = path.resolve(cacheDir, filename);
-
-    if (existsSync(filePath)) {
-      return {
-        resource: filePath,
-        mimeType: "audio/mp4",
-      };
-    }
-
     try {
+      const cacheDir = path.resolve(process.cwd(), ".cache");
+      if (!existsSync(cacheDir)) {
+        mkdirSync(cacheDir);
+      }
+
+      const videoId = this.extractVideoId(track.url.getValue());
+      const filename = `yt-provider-${videoId}.mp4`;
+      const filePath = path.resolve(cacheDir, filename);
+
+      if (existsSync(filePath)) {
+        return {
+          resource: filePath,
+          mimeType: "audio/mp4",
+        };
+      }
+
       logger.debug(`Downloading ${videoId} to ${filename}...`);
-      const { poToken } = await this.generateWebPoToken(videoId);
 
       const audioStream = await this.client.download(videoId, {
         type: "video+audio",
         quality: "bestefficiency",
-        po_token: poToken,
+        client: "YTMUSIC",
         format: "mp4",
       });
 
@@ -160,7 +129,7 @@ export class YoutubeAudioProvider implements AudioProvider {
         mimeType: "audio/mp4",
       };
     } catch (error) {
-      logger.error(`Failed to download ${videoId}:`, error);
+      logger.error(`Failed to download ${track.title}:`, error);
       throw new Error(`Failed to download and cache track: ${track.title}`);
     }
   }
@@ -222,95 +191,77 @@ export class YoutubeAudioProvider implements AudioProvider {
     return videoId;
   }
 
-  /**
-   * Generates a Web Po Token for YouTube requests.
-   * @param contentBinding The content binding identifier.
-   * @returns A promise that resolves to the Web Po Token result.
-   */
-  private async generateWebPoToken(contentBinding: string) {
-    if (!contentBinding) {
-      throw new Error("Could not get visitor data");
-    }
+  private async getVideoInfo(
+    videoId: string,
+    requestBy: string,
+  ): Promise<Track> {
+    try {
+      const result = await this.client.getBasicInfo(videoId);
 
-    const dom = new JSDOM(
-      '<!DOCTYPE html><html lang="en"><head><title></title></head><body></body></html>',
-      {
-        url: "https://www.youtube.com/",
-        referrer: "https://www.youtube.com/",
-      },
-    );
+      const { title, channel, author, thumbnail, duration } =
+        result.basic_info || {};
 
-    Object.assign(globalThis, {
-      window: dom.window,
-      document: dom.window.document,
-      location: dom.window.location,
-      origin: dom.window.origin,
-    });
+      const authorName = author ?? channel?.name;
+      const thumbnailUrl = thumbnail?.[0]?.url ?? "";
 
-    if (!Reflect.has(globalThis, "navigator")) {
-      Object.defineProperty(globalThis, "navigator", {
-        value: dom.window.navigator,
+      if (
+        !title ||
+        !authorName ||
+        !thumbnailUrl ||
+        !duration ||
+        !videoId ||
+        duration <= 0
+      ) {
+        throw new Error("Could not extract video info");
+      }
+
+      return Track.create(videoId, {
+        title,
+        thumbnailUrl,
+        durationSeconds: duration ?? 0,
+        url: TrackUrl.create(`https://www.youtube.com/watch?v=${videoId}`),
+        requestedBy: requestBy,
+        author: authorName,
       });
+    } catch (error) {
+      logger.error(`Failed to get video info for video ID: ${videoId}`, error);
+      throw new Error(`Failed to get video info for video ID: ${videoId}`);
     }
+  }
 
-    const challengeResponse = await this.client.getAttestationChallenge(
-      "ENGAGEMENT_TYPE_UNBOUND",
-    );
+  /**
+   * Searches YouTube for videos matching the query and returns a list of tracks.
+   * @returns A promise that resolves to an array of Track objects matching the search query.
+   */
+  private async search(
+    query: string,
+    requestedBy: string,
+    limit: number,
+  ): Promise<Track[]> {
+    try {
+      const result = await this.client.search(query, { type: "video" });
+      const videos = result.videos.slice(0, limit) ?? [];
 
-    if (!challengeResponse.bg_challenge) {
-      throw new Error("Could not get challenge");
+      const tracks = videos.map((video) => {
+        const video_id = video.key("video_id")?.string() ?? "";
+        const duration = video.key("duration")?.object() as { seconds: number };
+        const title = video.key("title")?.object() as { text: string };
+        const author = video.key("author")?.object() as { name: string };
+
+        return Track.create(video_id, {
+          title: title?.text ?? "",
+          thumbnailUrl: "",
+          durationSeconds: duration.seconds ?? 0,
+          url: TrackUrl.create(`https://www.youtube.com/watch?v=${video_id}`),
+          author: author?.name ?? "",
+          requestedBy,
+        });
+      });
+
+      return tracks;
+    } catch (error) {
+      logger.error(`Failed to search for tracks: ${query}`, error);
+      throw new Error(`Failed to search for tracks: ${query}`);
     }
-
-    const interpreterUrl =
-      challengeResponse.bg_challenge.interpreter_url
-        .private_do_not_access_or_else_trusted_resource_url_wrapped_value;
-    const bgScriptResponse = await fetch(`https:${interpreterUrl}`);
-    const interpreterJavascript = await bgScriptResponse.text();
-
-    if (interpreterJavascript) {
-      new Function(interpreterJavascript)();
-    } else {
-      throw new Error("Could not load VM");
-    }
-
-    const botGuard = await BG.BotGuardClient.create({
-      program: challengeResponse.bg_challenge.program,
-      globalName: challengeResponse.bg_challenge.global_name,
-      globalObj: globalThis,
-    });
-
-    const webPoSignalOutput: WebPoSignalOutput = [];
-    const botGuardResponse = await botGuard.snapshot({ webPoSignalOutput });
-    const requestKey = "O43z0dpjhgX20SCx4KAo";
-
-    const integrityTokenResponse = await fetch(buildURL("GenerateIT", true), {
-      method: "POST",
-      headers: {
-        "content-type": "application/json+protobuf",
-        "x-goog-api-key": GOOG_API_KEY,
-        "x-user-agent": "grpc-web-javascript/0.1",
-        "user-agent": USER_AGENT,
-      },
-      body: JSON.stringify([requestKey, botGuardResponse]),
-    });
-
-    const response = (await integrityTokenResponse.json()) as unknown[];
-
-    if (typeof response[0] !== "string") {
-      throw new Error("Could not get integrity token");
-    }
-
-    const integrityTokenBasedMinter = await BG.WebPoMinter.create(
-      { integrityToken: response[0] },
-      webPoSignalOutput,
-    );
-
-    const contentPoToken =
-      await integrityTokenBasedMinter.mintAsWebsafeString(contentBinding);
-
-    return {
-      poToken: contentPoToken,
-      visitorData: contentBinding,
-    };
   }
 }
