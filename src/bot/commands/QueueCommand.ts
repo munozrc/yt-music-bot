@@ -15,6 +15,7 @@ const LOOP_ICONS: Record<LoopMode, string> = {
   none: "",
   track: " 🔂",
   queue: " 🔁",
+  autoplay: " 🔁",
 };
 
 const PAGE_SIZE = 10;
