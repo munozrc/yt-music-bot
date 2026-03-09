@@ -72,6 +72,7 @@ export async function buildContainer(): Promise<Container> {
 
     skipTrack: new SkipTrackUseCase(
       sessionRepo,
+      audioProvider,
       audioPlayer,
       voiceAdapter,
       eventBus,

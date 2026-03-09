@@ -138,16 +138,17 @@ export class YoutubeAudioProvider implements AudioProvider {
     try {
       const videoId = this.extractVideoId(seedTrack.url.getValue());
       const upNext = await this.client.music.getUpNext(videoId, true);
-      const contents = upNext?.contents ?? [];
 
-      const normalizeContents = contents
+      // Filter out the seed track if it appears in the recommendations
+      // and limit to requested count
+      const results = (upNext?.contents ?? [])
         .filter((item) => item.key("video_id")?.string() !== videoId)
         .slice(0, count);
 
-      return normalizeContents.map((song) => {
+      const tracks = results.map((song) => {
+        const video_id = song.key("video_id")?.string() ?? "";
         const duration = song.key("duration")?.object() as { seconds: number };
         const titleObj = song.key("title")?.object() as { text: string };
-        const thumbnail = song.key("thumbnail").array()[0]?.url || "";
         const artists =
           song
             .key("artists")
@@ -155,20 +156,17 @@ export class YoutubeAudioProvider implements AudioProvider {
             ?.map((a) => a.name)
             .join(" & ") || "Unknown";
 
-        return Track.create(
-          this.extractVideoId(song.key("video_id")?.string() ?? ""),
-          {
-            title: titleObj.text ?? "Unknown Title",
-            thumbnailUrl: thumbnail,
-            durationSeconds: duration.seconds ?? 0,
-            url: TrackUrl.create(
-              `https://www.youtube.com/watch?v=${song.key("video_id")?.string()}`,
-            ),
-            author: artists,
-            requestedBy: "bot",
-          },
-        );
+        return Track.create(video_id, {
+          author: artists,
+          thumbnailUrl: "",
+          title: titleObj.text ?? "",
+          durationSeconds: duration.seconds ?? 0,
+          url: TrackUrl.create(`https://www.youtube.com/watch?v=${video_id}`),
+          requestedBy: "bot",
+        });
       });
+
+      return tracks;
     } catch (error) {
       logger.error(
         `Failed to get recommendations from track: ${seedTrack.id}`,

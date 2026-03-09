@@ -1,6 +1,8 @@
+import { logger } from "@/config/logger";
 import type { EventBus } from "@/core/shared/infrastructure/EventBus";
 
 import type { Track } from "../../domain/entities/Track";
+import type { AudioProvider } from "../../domain/repositories/AudioProvider";
 import type { MusicSessionRepository } from "../../domain/repositories/MusicSessionRepository";
 import { GuildId } from "../../domain/value-objects/GuildId";
 import type { AudioPlayerAdapter } from "../../infrastructure/audio/AudioPlayerAdapter";
@@ -19,6 +21,7 @@ export interface SkipTrackResult {
 export class SkipTrackUseCase {
   constructor(
     private readonly sessionRepo: MusicSessionRepository,
+    private readonly audioProvider: AudioProvider,
     private readonly audioPlayer: AudioPlayerAdapter,
     private readonly voiceAdapter: DiscordVoiceAdapter,
     private readonly eventBus: EventBus,
@@ -32,6 +35,25 @@ export class SkipTrackUseCase {
     if (!session.currentTrack) throw new Error("Nothing is playing right now");
 
     const skipped = session.currentTrack;
+
+    // Autoplay prefetch: if skipping the last track, fetch recommendations before advancing
+    if (
+      session.queue.loopMode === "autoplay" &&
+      session.queue.upcomingTracks.length === 0 &&
+      session.currentTrack
+    ) {
+      try {
+        const recs = await this.audioProvider.getRecommendations(
+          session.currentTrack,
+          5,
+        );
+        session.queue.enqueueMany(recs);
+      } catch {
+        logger.warn(
+          `[Autoplay] Failed to fetch recommendations on skip for guild ${guildId.getValue()}.`,
+        );
+      }
+    }
 
     // Domain: advance queue, emits TrackEnded + (TrackStarted | QueueEmpty)
     const next = session.skip();
