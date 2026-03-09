@@ -5,7 +5,6 @@
 ## ✨ Features
 
 - 🔥 Play music directly from YouTube links or search queries
-- 🎶 Supports playlists and individual tracks
 - 🔁 Autoplay: automatically plays related songs after the queue ends
 - ⏯️ Controls: play, pause, skip, stop, volume, queue
 - 📜 Slash command support (`/play`, `/skip`, etc.)
@@ -22,18 +21,12 @@ cd yt-music-bot
 ### Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ## ⚙️ Configure your bot
 
-1. Copy `.env.example` to `.env`:
-
-```bash
-cp .env.example .env
-```
-
-2. Fill in your Discord bot token and other configs in `.env`.
+1. Fill in your Discord bot token and other configs in `.env`.
 
 | Variable        | Description                                                |
 | --------------- | ---------------------------------------------------------- |
@@ -45,27 +38,26 @@ cp .env.example .env
 ## ▶️ Run the bot
 
 ```bash
-npm run dev
-```
-
-For production:
-
-```bash
-npm run build
-npm start
+pnpm run start
 ```
 
 ## 📜 Commands
 
-| Command           | Description                          |
-| ----------------- | ------------------------------------ |
-| `/play <query>`   | Play a song or playlist from YouTube |
-| `/skip`           | Skip to the next track               |
-| `/stop`           | Stop the music and clear the queue   |
-| `/queue`          | Show current queue                   |
-| `/pause`          | Pause playback                       |
-| `/resume`         | Resume playback                      |
-| `/volume <1-100>` | Set the playback volume              |
+| Command           | Description                                                               |
+| ----------------- | ------------------------------------------------------------------------- |
+| `/play <query>`   | Play a song or add it to the queue (YouTube URL or search term, required) |
+| `/skip`           | Skip the current track                                                    |
+| `/stop`           | Stop playback and clear the queue (bot stays in channel)                  |
+| `/leave`          | Disconnect the bot from the voice channel and clear the queue             |
+| `/queue [page]`   | Show the current queue (optional `page`, default: 1)                      |
+| `/pause`          | Pause the current track                                                   |
+| `/resume`         | Resume a paused track                                                     |
+| `/volume <0-200>` | Set the playback volume (0–200)                                           |
+| `/loop <mode>`    | Set loop mode — choices: `Off`, `Track`, `Queue`, `Autoplay`              |
+
+Notes:
+
+- Most voice/control commands require you to be in the same voice channel as the bot.
 
 ## 🛠️ Built With
 
