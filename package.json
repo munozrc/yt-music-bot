@@ -4,7 +4,10 @@
   "description": "A Discord music bot built with TypeScript that streams music from YouTube",
   "scripts": {
     "start": "tsx src/main.ts",
-    "dev": "tsx watch src/main.ts"
+    "lint:check": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "dev": "tsx watch src/main.ts",
+    "typecheck": "tsc --noEmit"
   },
   "license": "AGPL-3.0-only",
   "packageManager": "pnpm@10.30.3",

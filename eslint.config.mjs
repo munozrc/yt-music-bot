@@ -1,11 +1,9 @@
 // @ts-check
-import { defineConfig } from "eslint/config";
+import { defineConfig, globalIgnores } from "eslint/config";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  tseslint.configs.strict,
-  tseslint.configs.stylistic,
   {
     plugins: {
       "simple-import-sort": simpleImportSort,
@@ -15,7 +13,7 @@ export default defineConfig(
       "simple-import-sort/exports": "error",
     },
   },
-  {
-    ignores: ["dist/", "node_modules/"],
-  },
+  tseslint.configs.strict,
+  tseslint.configs.stylistic,
+  globalIgnores(["dist/*", "node_modules/*"]),
 );
